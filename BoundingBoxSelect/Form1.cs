@@ -15,6 +15,9 @@ namespace BoundingBoxSelect
     {
 
         #region Fields
+        private string basepath = "";
+        private int image_width_;
+        private int image_height_;
 
         private Cursor selectCursor_ = Cursors.Default;
         private Cursor drawCursor_ = Cursors.Cross;
@@ -36,11 +39,13 @@ namespace BoundingBoxSelect
             public string path;
             public List<Rectangle> box;
             public List<Rectangle> fakeBox;
+            public List<Rectangle> GT_Head_box;
             public ImageInfo(string _path)
             {
                 path = _path;
                 box = new List<Rectangle>();
                 fakeBox = new List<Rectangle>();
+                GT_Head_box = new List<Rectangle>();
             }
         }
         List<ImageInfo> img;
@@ -124,20 +129,6 @@ namespace BoundingBoxSelect
             InitializeComponent();
         }
 
-        private void btn_next_box_Click(object sender, EventArgs e)
-        {
-
-            scale_x = (double)(pictureBox1.Width) / pictureBox1.Image.Width;
-            scale_y = (double)(pictureBox1.Height) / pictureBox1.Image.Height;
-            int xmin = (int)Math.Floor((double)topLeft.X / scale_x);
-            int xmax = (int)Math.Floor((double)bottomRight.X / scale_x);
-            int ymin = (int)Math.Floor((double)topLeft.Y / scale_y);
-            int ymax = (int)Math.Floor((double)bottomRight.Y / scale_y);
-            img[curPtr].box.Add(new Rectangle(xmin, ymin, xmax - xmin, ymax - ymin));
-            img[curPtr].fakeBox.Add(new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y));
-            ResetBoxVar();
-        }
-
         private void btn_next_picture_Click(object sender, EventArgs e)
         {
             if(curPtr >= img.Count - 1)
@@ -145,19 +136,30 @@ namespace BoundingBoxSelect
                 MessageBox.Show("已经到最后一张");
                 return;
             }
+            int xmin = (int)Math.Floor((double)topLeft.X * scale_x);
+            int xmax = (int)Math.Floor((double)bottomRight.X * scale_x);
+            int ymin = (int)Math.Floor((double)topLeft.Y * scale_y);
+            int ymax = (int)Math.Floor((double)bottomRight.Y * scale_y);
+
+            if (img[curPtr].fakeBox.Count == 0)
+            {
+                img[curPtr].box.Add(new Rectangle(xmin, ymin, xmax - xmin, ymax - ymin));
+                img[curPtr].fakeBox.Add(new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y));
+            }
+            else
+            {
+                img[curPtr].box[0] = new Rectangle(xmin, ymin, xmax - xmin, ymax - ymin);
+                img[curPtr].fakeBox[0] = new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+            }
+            ResetBoxVar();
+
             ++curPtr;
             SetPictureBoxPicture();
-            ResetBoxVar();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == Keys.Space)
-            {
-                btn_next_box.PerformClick();
-                return true;
-            }
-            else if(keyData == Keys.N)
+            if(keyData == Keys.N)
             {
                 btn_next_picture.PerformClick();
                 return true;
@@ -167,6 +169,9 @@ namespace BoundingBoxSelect
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            btn_next_picture.Enabled = false;
+            btn_pre_picture.Enabled = false;
+
             //检测picture上的鼠标事件
             pictureBox1.MouseEnter += new EventHandler(pictureBox1_OnMouseEnter);
             pictureBox1.MouseDown += new MouseEventHandler(pictureBox1_OnMouseDown);
@@ -174,67 +179,6 @@ namespace BoundingBoxSelect
             pictureBox1.MouseUp += new MouseEventHandler(pictureBox1_OnMouseUp);
             pictureBox1.Paint += new PaintEventHandler(pictureBox1_OnPaint);
 
-            img = new List<ImageInfo>();
-            // 读取图片list
-            try
-            {
-                FileStream fs = new FileStream("list.txt", FileMode.OpenOrCreate);
-                StreamReader listReader = new StreamReader(fs);
-                string line = "";
-                while(line != null)
-                {
-                    line = listReader.ReadLine();
-                    if (line != null && !line.Equals(""))
-                        img.Add(new ImageInfo(line));
-                }
-                listReader.Close();
-                fs.Close();
-            }
-            catch(IOException ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
-           // img.Add(new ImageInfo("abcd"));
-
-            // 读取之前所有的annotation
-            try
-            {
-                FileStream fs = new FileStream("annotation.txt", FileMode.OpenOrCreate);
-                StreamReader sr = new StreamReader(fs);
-                string line = "";
-                curPtr = 0;
-                while(line != null)
-                {
-                    line = sr.ReadLine();
-                    if (line == null || line.Equals(""))
-                        continue;
-                    int cnt = int.Parse(line);
-                    for (int j = 0; j < cnt; ++j)
-                    {
-                        line = sr.ReadLine();
-                        string[] num = line.Split(' ');
-                        Rectangle anno = new Rectangle();
-                        anno.X = int.Parse(num[0]);
-                        anno.Y = int.Parse(num[1]);
-                        anno.Width = int.Parse(num[2]);
-                        anno.Height = int.Parse(num[3]);
-                        img[curPtr].box.Add(anno);
-                    }
-                    ++curPtr;
-                }
-
-                sr.Close();
-                fs.Close();
-            }
-            catch (IOException ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            if (curPtr == img.Count)
-                -- curPtr;
-            ResetBoxVar();
-            SetPictureBoxPicture();
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -287,13 +231,18 @@ namespace BoundingBoxSelect
             SelectedImage = false;
             mouseDown_ = false;
             selectImageRect_.Width = selectImageRect_.Height = 0;
-            btn_next_box.Enabled = false;
+            btn_next_picture.Enabled = false;
         }
 
         private void SetPictureBoxPicture()
         {
-            pictureBox1.ImageLocation = img[curPtr].path;
+
+            image_width_ = pictureBox1.Width / 2;
+            image_height_ = pictureBox1.Height / 2;
             picture_path.Text = img[curPtr].path;
+            pictureBox1.Invalidate();
+
+            //g.Dispose();
         }
 
         private void btn_pre_picture_Click(object sender, EventArgs e)
@@ -304,6 +253,113 @@ namespace BoundingBoxSelect
                 return;
             }
             --curPtr;
+            ResetBoxVar();
+            SetPictureBoxPicture();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folderSelectDlg = new FolderBrowserDialog();
+            folderSelectDlg.Description = "请选择文件夹路径";
+
+            if (folderSelectDlg.ShowDialog() == DialogResult.OK)
+            {
+                string folderPath = folderSelectDlg.SelectedPath;
+                TB_basepath.Text = folderPath;
+
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(TB_basepath.Text))
+            {
+                MessageBox.Show("选择的路径不是一个文件夹路径");
+                return;
+            }
+            btn_next_picture.Enabled = true;
+            btn_pre_picture.Enabled = true;
+            Btn_SetConfig.Enabled = false;
+            basepath = TB_basepath.Text;
+
+            img = new List<ImageInfo>();
+
+            DirectoryInfo TheFolder = new DirectoryInfo(basepath);
+            foreach (FileInfo NextFile in TheFolder.GetFiles())
+                img.Add(new ImageInfo(Path.Combine(new string[] { basepath, NextFile.Name })));
+
+            // 读取之前所有的annotation
+            try
+            {
+                FileStream fs = new FileStream("annotation.txt", FileMode.OpenOrCreate);
+                StreamReader sr = new StreamReader(fs);
+                string line = "";
+                curPtr = 0;
+                while (line != null)
+                {
+                    line = sr.ReadLine();
+                    if (line == null || line.Equals(""))
+                        continue;
+                    int cnt = int.Parse(line);
+                    for (int j = 0; j < cnt; ++j)
+                    {
+                        line = sr.ReadLine();
+                        string[] num = line.Split(' ');
+                        Rectangle anno = new Rectangle();
+                        anno.X = int.Parse(num[0]);
+                        anno.Y = int.Parse(num[1]);
+                        anno.Width = int.Parse(num[2]);
+                        anno.Height = int.Parse(num[3]);
+                        img[curPtr].box.Add(anno);
+                    }
+                    ++curPtr;
+                }
+
+                sr.Close();
+                fs.Close();
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+            //读取所有head-box的annotation
+            try
+            {
+                FileStream fs = new FileStream("head_boxes.txt", FileMode.OpenOrCreate);
+                StreamReader sr = new StreamReader(fs);
+                string line = "";
+                int tmp_Ptr = 0;
+                while (line != null)
+                {
+                    line = sr.ReadLine();
+                    if (line == null || line.Equals(""))
+                        continue;
+                    int cnt = int.Parse(line);
+                    for (int j = 0; j < cnt; ++j)
+                    {
+                        line = sr.ReadLine();
+                        string[] num = line.Split(' ');
+                        Rectangle anno = new Rectangle();
+                        anno.X = int.Parse(num[0]);
+                        anno.Y = int.Parse(num[1]);
+                        anno.Width = int.Parse(num[2]);
+                        anno.Height = int.Parse(num[3]);
+                        img[tmp_Ptr].GT_Head_box.Add(anno);
+                    }
+                    ++ tmp_Ptr;
+                }
+
+                sr.Close();
+                fs.Close();
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+            if (curPtr == img.Count)
+                --curPtr;
             ResetBoxVar();
             SetPictureBoxPicture();
         }

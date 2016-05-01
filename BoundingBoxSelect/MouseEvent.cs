@@ -265,7 +265,7 @@ namespace BoundingBoxSelect
 
             if (e.Button == MouseButtons.Left)
             {
-                btn_next_box.Enabled = true;
+                btn_next_picture.Enabled = true;
                 if (SelectedImage) //已经圈定
                 {
                     if (SizeGrip != SizeGrip.None)
@@ -350,13 +350,36 @@ namespace BoundingBoxSelect
             }
         }
 
+
         private void pictureBox1_OnPaint(object sender, PaintEventArgs e)
         {
             //base.OnPaint(e);
 
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
+            //画headbox
+            if (Btn_SetConfig.Enabled == false && img != null && img.Count != 0)
+            {
+                Bitmap _img = new Bitmap(img[curPtr].path);
+                int ori_image_width = _img.Width;
+                int ori_image_height = _img.Height;
+                g.DrawImage(_img, new Rectangle(0, 0, image_width_, image_height_));
+                using (Pen pen = new Pen(Color.Red, 2))
+                {
+                    scale_x = (double)(ori_image_width) / image_width_;
+                    scale_y = (double)(ori_image_height) / image_height_;
+                    int xmin = (int)Math.Floor((double)img[curPtr].GT_Head_box[0].X / scale_x);
+                    int ymin = (int)Math.Floor((double)img[curPtr].GT_Head_box[0].Y / scale_y);
+                    g.DrawRectangle(pen, new Rectangle(xmin, ymin, (int)((double)img[curPtr].GT_Head_box[0].Width / scale_x), (int)((double)img[curPtr].GT_Head_box[0].Height / scale_y)));
+                    if (img[curPtr].fakeBox.Count != 0)
+                    {
+                        foreach (Rectangle tmp in img[curPtr].fakeBox)
+                        {
+                            g.DrawRectangle(pen, tmp);
+                        }
+                    }
+                }
+            }
             if (SelectImageRect.Width != 0 && SelectImageRect.Height != 0)
             {
                 Rectangle rect = SelectImageRect;
@@ -372,7 +395,7 @@ namespace BoundingBoxSelect
                     }
                 }
 
-                using (Pen pen = new Pen(Color.Yellow))
+                using (Pen pen = new Pen(Color.Yellow, 2))
                 {
                     g.DrawRectangle(pen, rect);
                     using (SolidBrush brush = new SolidBrush(Color.AliceBlue))
@@ -388,6 +411,7 @@ namespace BoundingBoxSelect
                     {
                         g.DrawRectangle(pen, tmp);
                     }
+                    
                 }
 
                 DrawOperate(g);
