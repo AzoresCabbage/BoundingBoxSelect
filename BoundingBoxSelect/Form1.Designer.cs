@@ -41,18 +41,21 @@
             // 
             // pictureBox1
             // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pictureBox1.InitialImage = null;
             this.pictureBox1.Location = new System.Drawing.Point(12, 21);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(830, 610);
+            this.pictureBox1.Size = new System.Drawing.Size(984, 610);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
             // btn_pre_picture
             // 
             this.btn_pre_picture.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_pre_picture.Location = new System.Drawing.Point(876, 472);
+            this.btn_pre_picture.Location = new System.Drawing.Point(669, 652);
             this.btn_pre_picture.Name = "btn_pre_picture";
             this.btn_pre_picture.Size = new System.Drawing.Size(120, 66);
             this.btn_pre_picture.TabIndex = 1;
@@ -63,7 +66,7 @@
             // btn_next_picture
             // 
             this.btn_next_picture.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_next_picture.Location = new System.Drawing.Point(876, 565);
+            this.btn_next_picture.Location = new System.Drawing.Point(848, 653);
             this.btn_next_picture.Name = "btn_next_picture";
             this.btn_next_picture.Size = new System.Drawing.Size(120, 66);
             this.btn_next_picture.TabIndex = 2;
@@ -73,6 +76,7 @@
             // 
             // picture_path
             // 
+            this.picture_path.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.picture_path.Location = new System.Drawing.Point(123, 651);
             this.picture_path.Name = "picture_path";
             this.picture_path.Size = new System.Drawing.Size(531, 15);
@@ -81,6 +85,7 @@
             // 
             // Btn_SelectRootPath
             // 
+            this.Btn_SelectRootPath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.Btn_SelectRootPath.Location = new System.Drawing.Point(12, 694);
             this.Btn_SelectRootPath.Name = "Btn_SelectRootPath";
             this.Btn_SelectRootPath.Size = new System.Drawing.Size(98, 23);
@@ -91,6 +96,7 @@
             // 
             // TB_basepath
             // 
+            this.TB_basepath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.TB_basepath.Location = new System.Drawing.Point(125, 696);
             this.TB_basepath.Name = "TB_basepath";
             this.TB_basepath.Size = new System.Drawing.Size(311, 21);
@@ -99,6 +105,7 @@
             // 
             // Btn_SetConfig
             // 
+            this.Btn_SetConfig.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.Btn_SetConfig.Location = new System.Drawing.Point(492, 696);
             this.Btn_SetConfig.Name = "Btn_SetConfig";
             this.Btn_SetConfig.Size = new System.Drawing.Size(75, 23);
@@ -109,6 +116,7 @@
             // 
             // label3
             // 
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label3.Location = new System.Drawing.Point(12, 651);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(98, 15);

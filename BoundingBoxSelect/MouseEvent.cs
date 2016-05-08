@@ -207,37 +207,27 @@ namespace BoundingBoxSelect
             switch (SizeGrip)
             {
                 case SizeGrip.TopLeft:
-                    topLeft = point;
                     Cursor = Cursors.SizeNWSE;
                     break;
                 case SizeGrip.BottomRight:
-                    bottomRight = point;
                     Cursor = Cursors.SizeNWSE;
                     break;
                 case SizeGrip.TopRight:
-                    topLeft.Y = point.Y;
-                    bottomRight.X = point.X;
                     Cursor = Cursors.SizeNESW;
                     break;
                 case SizeGrip.BottomLeft:
-                    bottomRight.Y = point.Y;
-                    topLeft.X = point.X;
                     Cursor = Cursors.SizeNESW;
                     break;
                 case SizeGrip.Top:
-                    topLeft.Y = point.Y;
                     Cursor = Cursors.SizeNS;
                     break;
                 case SizeGrip.Bottom:
-                    bottomRight.Y = point.Y;
                     Cursor = Cursors.SizeNS;
                     break;
                 case SizeGrip.Left:
-                    topLeft.X = point.X;
                     Cursor = Cursors.SizeWE;
                     break;
                 case SizeGrip.Right:
-                    bottomRight.X = point.X;
                     Cursor = Cursors.SizeWE;
                     break;
                 //case SizeGrip.All:
@@ -255,7 +245,6 @@ namespace BoundingBoxSelect
 
         private void pictureBox1_OnMouseEnter(object sender, EventArgs e)
         {
-            //base.OnMouseEnter(e);
             Cursor = SelectCursor;
         }
 
@@ -279,14 +268,12 @@ namespace BoundingBoxSelect
                 {
                     mouseDown_ = true;
                     mouseDownPoint_ = e.Location;
-                    topLeft = e.Location;
                 }
             }
         }
 
         private void pictureBox1_OnMouseMove(object sender, MouseEventArgs e)
         {
-            //base.OnMouseMove(e);
             //按下左键的时候移动鼠标
             if (mouseDown_) 
             {
@@ -321,8 +308,6 @@ namespace BoundingBoxSelect
 
         private void pictureBox1_OnMouseUp(object sender, MouseEventArgs e)
         {
-            //base.OnMouseUp(e);
-
             if (e.Button == MouseButtons.Left)
             {
                 if (!SelectedImage)
@@ -332,7 +317,6 @@ namespace BoundingBoxSelect
                     {
                         SelectedImage = true;
                         endPoint_ = e.Location;
-                        bottomRight = e.Location;
                     }
                 }
                 else
@@ -346,7 +330,6 @@ namespace BoundingBoxSelect
                 }
 
                 mouseDown_ = false;
-                //mouseDownPoint_ = Point.Empty;
             }
         }
 
@@ -363,20 +346,19 @@ namespace BoundingBoxSelect
                 Bitmap _img = new Bitmap(img[curPtr].path);
                 int ori_image_width = _img.Width;
                 int ori_image_height = _img.Height;
-                g.DrawImage(_img, new Rectangle(0, 0, image_width_, image_height_));
+                g.DrawImage(_img, new Rectangle(image_x_, image_y_, image_width_, image_height_));
                 using (Pen pen = new Pen(Color.Red, 2))
                 {
                     scale_x = (double)(ori_image_width) / image_width_;
                     scale_y = (double)(ori_image_height) / image_height_;
-                    int xmin = (int)Math.Floor((double)img[curPtr].GT_Head_box[0].X / scale_x);
-                    int ymin = (int)Math.Floor((double)img[curPtr].GT_Head_box[0].Y / scale_y);
-                    g.DrawRectangle(pen, new Rectangle(xmin, ymin, (int)((double)img[curPtr].GT_Head_box[0].Width / scale_x), (int)((double)img[curPtr].GT_Head_box[0].Height / scale_y)));
-                    if (img[curPtr].fakeBox.Count != 0)
+                    int xmin = (int)Math.Floor((double)img[curPtr].GT_Head_box.X / scale_x);
+                    int ymin = (int)Math.Floor((double)img[curPtr].GT_Head_box.Y / scale_y);
+                    g.DrawRectangle(pen, new Rectangle(xmin + image_x_, ymin + image_y_, (int)((double)img[curPtr].GT_Head_box.Width / scale_x), (int)((double)img[curPtr].GT_Head_box.Height / scale_y)));
+                    if (img[curPtr].box != null)
                     {
-                        foreach (Rectangle tmp in img[curPtr].fakeBox)
-                        {
-                            g.DrawRectangle(pen, tmp);
-                        }
+                        xmin = (int)Math.Floor((double)img[curPtr].box.X / scale_x);
+                        ymin = (int)Math.Floor((double)img[curPtr].box.Y / scale_y);
+                        g.DrawRectangle(pen, new Rectangle(xmin + image_x_, ymin + image_y_, (int)((double)img[curPtr].box.Width / scale_x), (int)((double)img[curPtr].box.Height / scale_y)));
                     }
                 }
             }
@@ -407,11 +389,7 @@ namespace BoundingBoxSelect
                                 sizeGripRect);
                         }
                     }
-                    foreach(Rectangle tmp in img[curPtr].fakeBox)
-                    {
-                        g.DrawRectangle(pen, tmp);
-                    }
-                    
+                    //g.DrawRectangle(pen, img[curPtr].fakeBox);
                 }
 
                 DrawOperate(g);

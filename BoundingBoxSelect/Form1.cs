@@ -18,6 +18,8 @@ namespace BoundingBoxSelect
         private string basepath = "";
         private int image_width_;
         private int image_height_;
+        private int image_x_;
+        private int image_y_;
 
         private Cursor selectCursor_ = Cursors.Default;
         private Cursor drawCursor_ = Cursors.Cross;
@@ -31,21 +33,16 @@ namespace BoundingBoxSelect
         private SizeGrip sizeGrip_;
         private Dictionary<SizeGrip, Rectangle> sizeGripRectList_;
         private OperateManager operateManager_;
-        private Point topLeft, bottomRight;
 
         private double scale_x, scale_y;
         internal class ImageInfo
         {
             public string path;
-            public List<Rectangle> box;
-            public List<Rectangle> fakeBox;
-            public List<Rectangle> GT_Head_box;
+            public Rectangle box;
+            public Rectangle GT_Head_box;
             public ImageInfo(string _path)
             {
                 path = _path;
-                box = new List<Rectangle>();
-                fakeBox = new List<Rectangle>();
-                GT_Head_box = new List<Rectangle>();
             }
         }
         List<ImageInfo> img;
@@ -131,25 +128,33 @@ namespace BoundingBoxSelect
 
         private void btn_next_picture_Click(object sender, EventArgs e)
         {
-            if(curPtr >= img.Count - 1)
+            if (curPtr >= img.Count - 1)
             {
+                if (selectedImage_)
+                {
+                    int xmin = (int)Math.Floor((double)(selectImageRect_.X - image_x_) * scale_x);
+                    int width = (int)Math.Floor((double)selectImageRect_.Width * scale_x);
+                    int ymin = (int)Math.Floor((double)(selectImageRect_.Y - image_y_) * scale_y);
+                    int height = (int)Math.Floor((double)selectImageRect_.Height * scale_y);
+
+                    img[curPtr].box = new Rectangle(xmin, ymin, width, height);
+                }
                 MessageBox.Show("已经到最后一张");
                 return;
             }
-            int xmin = (int)Math.Floor((double)topLeft.X * scale_x);
-            int xmax = (int)Math.Floor((double)bottomRight.X * scale_x);
-            int ymin = (int)Math.Floor((double)topLeft.Y * scale_y);
-            int ymax = (int)Math.Floor((double)bottomRight.Y * scale_y);
-
-            if (img[curPtr].fakeBox.Count == 0)
+            if (!selectedImage_ && (img[curPtr].box.Width == 0 || img[curPtr].box.Height == 0))
             {
-                img[curPtr].box.Add(new Rectangle(xmin, ymin, xmax - xmin, ymax - ymin));
-                img[curPtr].fakeBox.Add(new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y));
+                MessageBox.Show("当前图片还未标注");
+                return;
             }
-            else
+            if (selectedImage_)
             {
-                img[curPtr].box[0] = new Rectangle(xmin, ymin, xmax - xmin, ymax - ymin);
-                img[curPtr].fakeBox[0] = new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+                int xmin = (int)Math.Floor((double)(selectImageRect_.X - image_x_) * scale_x);
+                int width = (int)Math.Floor((double)selectImageRect_.Width * scale_x);
+                int ymin = (int)Math.Floor((double)(selectImageRect_.Y - image_y_) * scale_y);
+                int height = (int)Math.Floor((double)selectImageRect_.Height * scale_y);
+
+                img[curPtr].box = new Rectangle(xmin, ymin, width, height);
             }
             ResetBoxVar();
 
@@ -162,6 +167,12 @@ namespace BoundingBoxSelect
             if(keyData == Keys.N)
             {
                 btn_next_picture.PerformClick();
+                return true;
+            }
+            if (keyData == Keys.P)
+            {
+
+                btn_pre_picture.PerformClick();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);　// 其他键按默认处理　
@@ -179,6 +190,7 @@ namespace BoundingBoxSelect
             pictureBox1.MouseUp += new MouseEventHandler(pictureBox1_OnMouseUp);
             pictureBox1.Paint += new PaintEventHandler(pictureBox1_OnPaint);
 
+            TB_basepath.Text = Path.Combine(new string[] {System.Environment.CurrentDirectory, "images"});
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -201,27 +213,39 @@ namespace BoundingBoxSelect
             //写入当前所有annotation
             try
             {
-                FileStream fs = new FileStream("annotation.txt", FileMode.OpenOrCreate);
-                StreamWriter sw = new StreamWriter(fs);
+                StreamWriter sw = new StreamWriter("annotation.txt", false);
                 //sw.Write(img.Count);
                 
-                for (int i = 0; i < curPtr;++i )
+                for (int i = 0; i < img.Count;++i )
                 {
-                    sw.WriteLine(img[i].box.Count);
-                    for (int j = 0; j < img[i].box.Count; ++j)
+                    if (img[i].box != null && img[i].box.Width != 0 && img[i].box.Height != 0)
                     {
-                        sw.WriteLine(img[i].box[j].X + " " + img[i].box[j].Y + " " + img[i].box[j].Width + " " + img[i].box[j].Height);
+                        sw.WriteLine(1);
+                        sw.WriteLine(img[i].box.X + " " + img[i].box.Y + " " + img[i].box.Width + " " + img[i].box.Height);
+                    }
+                    else
+                    {
+                        sw.WriteLine(0);
                     }
                 }
 
                 sw.Close();
-                fs.Close();
             }
             catch (IOException ex)
             {
                 MessageBox.Show(ex.Message);
             }
             base.OnClosing(e);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            image_height_ = (int)((double)(pictureBox1.Height / 2.5)) - 50;
+            image_width_ = (int)((double)(pictureBox1.Width / 2.5)) - 50;
+            image_x_ = 100;// (pictureBox1.Width - image_width_) / 2;
+            image_y_ = 100;// (pictureBox1.Height - image_height_) / 2;
+            pictureBox1.Invalidate();
         }
 
         private void ResetBoxVar()
@@ -231,14 +255,11 @@ namespace BoundingBoxSelect
             SelectedImage = false;
             mouseDown_ = false;
             selectImageRect_.Width = selectImageRect_.Height = 0;
-            btn_next_picture.Enabled = false;
+            //btn_next_picture.Enabled = false;
         }
 
         private void SetPictureBoxPicture()
         {
-
-            image_width_ = pictureBox1.Width / 2;
-            image_height_ = pictureBox1.Height / 2;
             picture_path.Text = img[curPtr].path;
             pictureBox1.Invalidate();
 
@@ -266,7 +287,6 @@ namespace BoundingBoxSelect
             {
                 string folderPath = folderSelectDlg.SelectedPath;
                 TB_basepath.Text = folderPath;
-
             }
         }
 
@@ -301,18 +321,19 @@ namespace BoundingBoxSelect
                     if (line == null || line.Equals(""))
                         continue;
                     int cnt = int.Parse(line);
+                    Rectangle anno = new Rectangle();
                     for (int j = 0; j < cnt; ++j)
                     {
                         line = sr.ReadLine();
                         string[] num = line.Split(' ');
-                        Rectangle anno = new Rectangle();
                         anno.X = int.Parse(num[0]);
                         anno.Y = int.Parse(num[1]);
                         anno.Width = int.Parse(num[2]);
                         anno.Height = int.Parse(num[3]);
-                        img[curPtr].box.Add(anno);
+                        img[curPtr].box = anno;
                     }
-                    ++curPtr;
+                    if(cnt != 0)
+                        ++curPtr;
                 }
 
                 sr.Close();
@@ -323,10 +344,35 @@ namespace BoundingBoxSelect
                 MessageBox.Show(ex.Message);
             }
 
+            try
+            {
+                StreamWriter sw = new StreamWriter("annotation_backup.txt", false);
+                //sw.Write(img.Count);
+
+                for (int i = 0; i < img.Count; ++i)
+                {
+                    if (img[i].box != null && img[i].box.Width != 0 && img[i].box.Height != 0)
+                    {
+                        sw.WriteLine(1);
+                        sw.WriteLine(img[i].box.X + " " + img[i].box.Y + " " + img[i].box.Width + " " + img[i].box.Height);
+                    }
+                    else
+                    {
+                        sw.WriteLine(0);
+                    }
+                }
+
+                sw.Close();
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
             //读取所有head-box的annotation
             try
             {
-                FileStream fs = new FileStream("head_boxes.txt", FileMode.OpenOrCreate);
+                FileStream fs = new FileStream("head_boxes.txt", FileMode.Open);
                 StreamReader sr = new StreamReader(fs);
                 string line = "";
                 int tmp_Ptr = 0;
@@ -345,11 +391,14 @@ namespace BoundingBoxSelect
                         anno.Y = int.Parse(num[1]);
                         anno.Width = int.Parse(num[2]);
                         anno.Height = int.Parse(num[3]);
-                        img[tmp_Ptr].GT_Head_box.Add(anno);
+                        img[tmp_Ptr].GT_Head_box = anno;
                     }
                     ++ tmp_Ptr;
                 }
-
+                if(tmp_Ptr != img.Count)
+                {
+                    MessageBox.Show("head_boxes与数据库不匹配，img_num vs head_box_num = " + img.Count + " " + tmp_Ptr);
+                }
                 sr.Close();
                 fs.Close();
             }
