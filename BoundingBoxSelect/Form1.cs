@@ -210,30 +210,33 @@ namespace BoundingBoxSelect
             selectCursor_ = null;
             drawCursor_ = null;
 
-            //写入当前所有annotation
-            try
+            if (Btn_SetConfig.Enabled == false)
             {
-                StreamWriter sw = new StreamWriter("annotation.txt", false);
-                //sw.Write(img.Count);
-                
-                for (int i = 0; i < img.Count;++i )
+                //写入当前所有annotation
+                try
                 {
-                    if (img[i].box != null && img[i].box.Width != 0 && img[i].box.Height != 0)
-                    {
-                        sw.WriteLine(1);
-                        sw.WriteLine(img[i].box.X + " " + img[i].box.Y + " " + img[i].box.Width + " " + img[i].box.Height);
-                    }
-                    else
-                    {
-                        sw.WriteLine(0);
-                    }
-                }
+                    StreamWriter sw = new StreamWriter("annotation.txt", false);
+                    //sw.Write(img.Count);
 
-                sw.Close();
-            }
-            catch (IOException ex)
-            {
-                MessageBox.Show(ex.Message);
+                    for (int i = 0; i < img.Count; ++i)
+                    {
+                        if (img[i].box != null && img[i].box.Width != 0 && img[i].box.Height != 0)
+                        {
+                            sw.WriteLine(1);
+                            sw.WriteLine(img[i].box.X + " " + img[i].box.Y + " " + img[i].box.Width + " " + img[i].box.Height);
+                        }
+                        else
+                        {
+                            sw.WriteLine(0);
+                        }
+                    }
+
+                    sw.Close();
+                }
+                catch (IOException ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
             base.OnClosing(e);
         }
@@ -346,7 +349,8 @@ namespace BoundingBoxSelect
 
             try
             {
-                StreamWriter sw = new StreamWriter("annotation_backup.txt", false);
+                string name = System.DateTime.Now.ToFileTime().ToString() + "_annotation_backup.txt";
+                StreamWriter sw = new StreamWriter(name, false);
                 //sw.Write(img.Count);
 
                 for (int i = 0; i < img.Count; ++i)
